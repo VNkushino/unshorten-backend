@@ -1,13 +1,17 @@
 const express = require('express');
 const axios = require('axios');
-const app = express();
+const cors = require('cors'); // <-- Thêm dòng này
 
+const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Kích hoạt CORS để cho phép frontend truy cập
+app.use(cors()); // <-- Quan trọng nếu bạn dùng frontend từ GitHub Pages, Vercel, v.v.
 
 app.use(express.json());
 
 // API chính để giải mã link rút gọn
-app.post('/api/unshorten', async (req, res) => {
+app.post('/unshorten', async (req, res) => {
   const { url } = req.body;
 
   if (!url) {
@@ -17,21 +21,22 @@ app.post('/api/unshorten', async (req, res) => {
   try {
     const response = await axios.head(url, {
       maxRedirects: 10,
-      validateStatus: null, // không throw nếu 3xx/4xx
+      validateStatus: null,
     });
 
     const finalUrl = response.request?.res?.responseUrl || url;
-    res.json({ originalUrl: finalUrl });
+    res.json({ result: finalUrl }); // Trả về key 'result' cho khớp với script.js của bạn
 
   } catch (err) {
     res.status(500).json({ error: 'Không thể giải mã URL', detail: err.message });
   }
 });
 
+// Route test GET
 app.get('/', (req, res) => {
   res.send('Unshorten backend đang chạy!');
 });
 
 app.listen(PORT, () => {
-  console.log(`Server đang chạy tại http://localhost:${PORT}`);
+  console.log(`✅ Server đang chạy tại http://localhost:${PORT}`);
 });
